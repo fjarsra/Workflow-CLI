@@ -1,0 +1,15 @@
+name: synchronous-machine-env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - pip
+  - pip:
+    - pandas
+    - scikit-learn
+    - xgboost
+    - mlflow
+    - dagshub
+    - matplotlib
+    - seaborn

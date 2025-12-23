@@ -1,0 +1,3 @@
+Link Docker Hub : https://hub.docker.com/r/fjarsra/submission-mlops-model
+
+Link Artifact di GitHub : https://github.com/fjarsra/Eksperimen_SML_fjarsra/tree/main/Workflow-CI/MLProject
