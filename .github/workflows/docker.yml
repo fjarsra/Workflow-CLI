@@ -1,4 +1,4 @@
-name: CI/CD Training Pipeline (Final Offline Fix)
+name: CI/CD Training Pipeline (Fix with MLflow Run)
 
 on:
   push:
@@ -28,20 +28,32 @@ jobs:
           python-version: '3.9'
 
       - name: Install Dependencies
-        run: pip install mlflow dagshub pandas scikit-learn xgboost matplotlib seaborn
+        run: |
+          pip install mlflow dagshub pandas scikit-learn xgboost matplotlib seaborn
+          # Install virtualenv jaga-jaga kalau mlflow run butuh
+          pip install virtualenv
 
-      # 1. Jalankan Training (FIX: Path langsung ke MLProject)
-      - name: Run Training & Save Local Model
+      # ========================================================
+      # 1. Jalankan Training (SESUAI REQUEST REVIEWER: mlflow run)
+      # ========================================================
+      - name: Run Training via MLflow Project
         run: |
           cd MLProject
-          python modelling.py
+          
+          
+          mlflow run . --env-manager=local --experiment-name="Final_Submission"
 
-      # 2. Ambil Run ID (FIX: Path langsung ke MLProject)
+      # 2. Ambil Run ID (File ini dihasilkan oleh script python di dalam mlflow run)
       - name: Get Run ID
         run: |
           cd MLProject
-          run_id=$(cat run_id.txt)
-          echo "RUN_ID=$run_id" >> $GITHUB_ENV
+          if [ -f run_id.txt ]; then
+            run_id=$(cat run_id.txt)
+            echo "RUN_ID=$run_id" >> $GITHUB_ENV
+            echo "✅ Run ID Found: $run_id"
+          else
+            echo "⚠️ run_id.txt not found!"
+          fi
 
       # 3. Login Docker Hub
       - name: Login to Docker Hub
@@ -50,7 +62,8 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # 4. Build & Push Docker (FIX: Path langsung ke MLProject)
+      # 4. Build & Push Docker (OFFLINE MODE - Anti Error 404)
+      # Menggunakan folder 'model_docker' yang digenerate script python secara lokal
       - name: Build & Push Docker
         run: |
           cd MLProject
@@ -60,18 +73,22 @@ jobs:
           echo "Building Docker Image: $LOWER_IMAGE_NAME from local folder"
 
           # Build dari folder lokal "model_docker"
+          # Pastikan modelling.py kamu melakukan save ke folder ini!
           mlflow models build-docker \
             -m "model_docker" \
             -n "$LOWER_IMAGE_NAME:latest"
 
           docker push "$LOWER_IMAGE_NAME:latest"
 
-      # 5. Simpan Artefak ke GitHub (FIX: Path langsung ke MLProject)
+      # 5. Simpan Artefak ke GitHub
       - name: Commit Artifacts
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "bot@noreply.github.com"
           cd MLProject
-          git add *.png
-          git commit -m "Auto-save artifacts [skip ci]" || echo "No changes"
+          
+          # Add semua png kalau ada
+          git add *.png || true
+          
+          git commit -m "Auto-save artifacts [skip ci]" || echo "No changes to commit"
           git push
