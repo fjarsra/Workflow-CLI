@@ -2,8 +2,7 @@ name: CI/CD Training Pipeline (Final Offline Fix)
 
 on:
   push:
-    paths:
-      - 'Workflow-CI/**'
+    branches: [ "main" ]  # <--- HAPUS BAGIAN 'paths', ganti jadi ini aja
   workflow_dispatch:
 
 permissions:
