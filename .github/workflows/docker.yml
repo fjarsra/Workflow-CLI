@@ -2,7 +2,7 @@ name: CI/CD Training Pipeline (Final Offline Fix)
 
 on:
   push:
-    branches: [ "main" ]  # <--- HAPUS BAGIAN 'paths', ganti jadi ini aja
+    branches: [ "main" ]
   workflow_dispatch:
 
 permissions:
@@ -30,17 +30,16 @@ jobs:
       - name: Install Dependencies
         run: pip install mlflow dagshub pandas scikit-learn xgboost matplotlib seaborn
 
-      # 1. Jalankan Training
-      # Script ini sekarang akan membuat folder 'model_docker' secara otomatis
+      # 1. Jalankan Training (FIX: Path langsung ke MLProject)
       - name: Run Training & Save Local Model
         run: |
-          cd Workflow-CI/MLProject
+          cd MLProject
           python modelling.py
 
-      # 2. Ambil Run ID (Tetap perlu untuk nama tag atau log)
+      # 2. Ambil Run ID (FIX: Path langsung ke MLProject)
       - name: Get Run ID
         run: |
-          cd Workflow-CI/MLProject
+          cd MLProject
           run_id=$(cat run_id.txt)
           echo "RUN_ID=$run_id" >> $GITHUB_ENV
 
@@ -51,30 +50,28 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # 4. Build & Push Docker (Metode Offline)
-      # Kita arahkan langsung ke folder "model_docker" yang dibuat di langkah 1
+      # 4. Build & Push Docker (FIX: Path langsung ke MLProject)
       - name: Build & Push Docker
         run: |
-          cd Workflow-CI/MLProject
+          cd MLProject
           
           # Lowercase nama image
           LOWER_IMAGE_NAME=$(echo "${{ env.DOCKER_IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
           echo "Building Docker Image: $LOWER_IMAGE_NAME from local folder"
 
           # Build dari folder lokal "model_docker"
-          # TIDAK ADA DOWNLOAD = TIDAK ADA ERROR 404
           mlflow models build-docker \
             -m "model_docker" \
             -n "$LOWER_IMAGE_NAME:latest"
 
           docker push "$LOWER_IMAGE_NAME:latest"
 
-      # 5. Simpan Artefak ke GitHub
+      # 5. Simpan Artefak ke GitHub (FIX: Path langsung ke MLProject)
       - name: Commit Artifacts
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "bot@noreply.github.com"
-          cd Workflow-CI/MLProject
+          cd MLProject
           git add *.png
           git commit -m "Auto-save artifacts [skip ci]" || echo "No changes"
           git push
